@@ -110,21 +110,19 @@
 <table class="meta">
   <tr><td>Test durchgeführt am</td><td>24.11.2026</td></tr>
   <tr><td>Test durchgeführt durch</td><td>Jonas Laur</td></tr>
-  <tr><td>Getestetes System</td><td class="fill">localhost von ________________________</td></tr>
-  <tr><td>Gesamtergebnis</td><td class="fill">OK / Not OK</td></tr>
+  <tr><td>Getestetes System</td><td>localhost von Jonas Laur (eigenes Backend, mit Erlaubnis der Lehrperson)</td></tr>
+  <tr><td>Gesamtergebnis</td><td>OK</td></tr>
 </table>
 
 <table>
   <tr><th style="width:38%">Testfall</th><th>Ergebnis</th><th style="width:18%">Schweregrad der Fehler</th></tr>
-  <tr><td>Testfall 1: Registrierung mit ungültigen Daten</td><td class="fill">&nbsp;<br>&nbsp;</td><td></td></tr>
-  <tr><td>Testfall 2: Konto löschen, das in einer Buchung verwendet wird</td><td class="fill">&nbsp;<br>&nbsp;</td><td></td></tr>
-  <tr><td>Testfall 3: Ungültige Buchungen</td><td class="fill">&nbsp;<br>&nbsp;</td><td></td></tr>
-  <tr><td>Testfall 4: Datentrennung zwischen Projekten und Zugriff nach dem Logout</td><td class="fill">&nbsp;<br>&nbsp;</td><td></td></tr>
+  <tr><td>Testfall 1: Registrierung mit ungültigen Daten</td><td>Keine Fehler festgestellt ✅<br>409 bei doppeltem Namen, 400 bei zu kurzem Passwort, 401 bei falscher Gross-/Kleinschreibung. Keine Passwörter im Log.</td><td>-</td></tr>
+  <tr><td>Testfall 2: Konto löschen, das in einer Buchung verwendet wird</td><td>Keine Fehler festgestellt ✅<br>Löschen wird mit 409 abgelehnt, Konto 1000 und die Buchung bleiben erhalten.</td><td>-</td></tr>
+  <tr><td>Testfall 3: Ungültige Buchungen</td><td>Keine Fehler festgestellt ✅<br>Negativer Betrag, unbekanntes Konto und leerer Text ergeben je 400. 12.345 wird als 12.35 gespeichert.</td><td>-</td></tr>
+  <tr><td>Testfall 4: Datentrennung zwischen Projekten und Zugriff nach dem Logout</td><td>OK mit Beobachtung ⚠️<br>„Kurzverein“ sieht keine Daten vom Testverein und kann nicht auf dessen Konten buchen (400). Ohne oder mit kaputtem Token gibt es 401. Ein kopierter Token bleibt nach dem Logout bis zum Ablauf gültig.</td><td>Gering</td></tr>
 </table>
 
-<h3>Gefundene Fehler im Frontend</h3>
-<p class="fill">&nbsp;</p>
-<p class="fill">&nbsp;</p>
-
+<h3>Gefundene Fehler und Beobachtungen</h3>
+<p>Der Logout entfernt den Token nur im Browser. Wer den Token vorher kopiert hat, kann die API noch bis zu einer Stunde nutzen. Für eine Schul-App ist das vertretbar, eine Sperrliste für Tokens würde es beheben.</p>
 </body>
 </html>
