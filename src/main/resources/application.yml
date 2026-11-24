@@ -6,6 +6,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    # SQL goes through the logger (see logging.level.org.hibernate.SQL) instead of System.out
+    show-sql: false
     properties:
       hibernate.format_sql: true

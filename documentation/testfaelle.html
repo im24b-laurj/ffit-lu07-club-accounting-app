@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>LU11.A01 Manuelles Testing</title>
+<style>
+  body { font-family: "Segoe UI", Arial, sans-serif; font-size: 11pt; line-height: 1.45; color: #111; margin: 2cm; }
+  h1 { font-size: 18pt; margin-bottom: 0; }
+  h2 { font-size: 14pt; margin-top: 1.6em; border-bottom: 1px solid #999; padding-bottom: 2px; }
+  h3 { font-size: 11.5pt; margin-bottom: .3em; }
+  ol, ul { margin-top: .2em; }
+  table { border-collapse: collapse; width: 100%; margin-top: .6em; }
+  th, td { border: 1px solid #888; padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: #eee; }
+  .meta td:first-child { width: 35%; font-weight: 600; }
+  .fill { color: #777; }
+  .page { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<h1>LU11.A01 Manuelles Testing</h1>
+<p>Club-Accounting-App, Jonas Laur</p>
+
+<h2>Testbeschreibungen</h2>
+
+<p>Allgemeine Voraussetzungen für alle Testfälle: Das Backend läuft (lokal auf https://localhost:8443 oder über einen Cloudflare-Tunnel), das Frontend https://alexanderpeter.github.io/ffit-lu08-club-accounting-website/ ist geöffnet und im Feld „Backend:“ steht die Adresse dieses Backends. Die Entwicklertools des Browsers sind offen (Tab „Netzwerk“), damit die API-Aufrufe sichtbar sind.</p>
+
+<h3>Testfall 1: Registrierung mit ungültigen Daten</h3>
+<p>Voraussetzungen: Das Projekt „Testverein“ existiert bereits.</p>
+<p>Ablauf:</p>
+<ol>
+  <li>Tab für die Registrierung öffnen</li>
+  <li>Projektname „Testverein“ und Passwort „Testpasswort“ eingeben, „➕ Erstellen“ drücken</li>
+  <li>Projektname „Kurzverein“ und Passwort „abc“ eingeben, „➕ Erstellen“ drücken</li>
+  <li>Projektname „Kurzverein“ und Passwort „Kurzverein2026“ eingeben, „➕ Erstellen“ drücken</li>
+  <li>Zum Login wechseln und mit „Kurzverein“ und dem falschen Passwort „kurzverein2026“ (klein geschrieben) einloggen</li>
+  <li>Mit „Kurzverein“ und „Kurzverein2026“ einloggen und danach ausloggen</li>
+</ol>
+<p>Erwartungen:</p>
+<ul>
+  <li>Schritt 2: Fehlermeldung, weil der Name schon vergeben ist (POST /projects liefert 409)</li>
+  <li>Schritt 3: Fehlermeldung wegen zu kurzem Passwort (400), das Projekt wird nicht angelegt</li>
+  <li>Schritt 4: Projekt wird angelegt (201)</li>
+  <li>Schritt 5: Login wird abgelehnt (401), das Passwort ist also case-sensitive</li>
+  <li>Schritt 6: Login klappt, ein Token wird zurückgegeben</li>
+  <li>Im Backend-Log stehen keine Stacktraces und keine Passwörter</li>
+</ul>
+
+<h3>Testfall 2: Konto löschen, das in einer Buchung verwendet wird</h3>
+<p>Voraussetzungen: Projekt „Testverein“ existiert.</p>
+<p>Ablauf:</p>
+<ol>
+  <li>Mit „Testverein“ und „Testpasswort“ einloggen</li>
+  <li>Im Tab „1️⃣ Kontenplan“ zwei Zeilen hinzufügen: „1000 Kasse“ und „1020 Bank“, dann „💾 Änderungen speichern“</li>
+  <li>Im Tab „2️⃣ Buchungsjournal“ eine Zeile hinzufügen: heutiges Datum, Text „Bargeld abgehoben“, Soll 1000, Haben 1020, Betrag 200, dann speichern</li>
+  <li>Zurück im Kontenplan beim Konto 1000 auf „🗑️“ drücken und speichern</li>
+  <li>Seite neu laden (F5) und wieder einloggen</li>
+  <li>Tabs „3️⃣ Erfolgsrechnung“ und „4️⃣ Bilanz“ öffnen</li>
+</ol>
+<p>Erwartungen:</p>
+<ul>
+  <li>Schritt 4: Rote Fehlermeldung, PUT /accounts liefert 409</li>
+  <li>Nach dem Neuladen ist das Konto 1000 weiterhin vorhanden und die Buchung unverändert</li>
+  <li>In der Bilanz zeigen Kasse und Bank die Buchung über 200.00, die Bilanzsummen Aktiva und Passiva sind gleich</li>
+</ul>
+
+<h3>Testfall 3: Ungültige Buchungen</h3>
+<p>Voraussetzungen: Testfall 2 wurde durchgeführt (Konten 1000 und 1020, eine Buchung).</p>
+<p>Ablauf:</p>
+<ol>
+  <li>Mit „Testverein“ einloggen und das Buchungsjournal öffnen</li>
+  <li>Neue Zeile mit Betrag „-50“ erfassen (sonst gültige Werte), speichern</li>
+  <li>Betrag auf 50 setzen, als Soll-Konto „4711“ eintragen (existiert nicht), speichern</li>
+  <li>Soll-Konto auf 1000 korrigieren und den Text leer lassen, speichern</li>
+  <li>Text „Kaffeekasse“ eintragen, speichern</li>
+  <li>Bei der bestehenden Buchung „Bargeld abgehoben“ den Betrag auf 12.345 ändern, speichern und die Seite neu laden</li>
+</ol>
+<p>Erwartungen:</p>
+<ul>
+  <li>Schritte 2 bis 4: jeweils rote Fehlermeldung (400), es wird keine Buchung gespeichert</li>
+  <li>Schritt 5: Buchung wird mit der nächsten freien Nummer gespeichert</li>
+  <li>Schritt 6: Der Betrag wird auf zwei Nachkommastellen gerundet angezeigt (12.35)</li>
+  <li>Keine Fehler mit Status 500 im Netzwerk-Tab</li>
+</ul>
+
+<h3>Testfall 4: Datentrennung zwischen Projekten und Zugriff nach dem Logout</h3>
+<p>Voraussetzungen: „Testverein“ hat Konten und Buchungen (Testfälle 2 und 3), „Kurzverein“ existiert (Testfall 1).</p>
+<p>Ablauf:</p>
+<ol>
+  <li>Mit „Kurzverein“ und „Kurzverein2026“ einloggen</li>
+  <li>Kontenplan und Buchungsjournal öffnen</li>
+  <li>Im Buchungsjournal eine Buchung mit Soll 1000 und Haben 1020 erfassen (diese Konten gehören nur dem Testverein), speichern</li>
+  <li>Ausloggen</li>
+  <li>In den Entwicklertools den alten Token aus dem Local Storage („access_token“) kopieren und GET /accounts mit diesem Token aufrufen, z. B. per curl</li>
+  <li>GET /accounts ohne Token und mit dem Token „Bearer kaputt“ aufrufen</li>
+</ol>
+<p>Erwartungen:</p>
+<ul>
+  <li>Schritt 2: Kontenplan und Journal von „Kurzverein“ sind leer, nichts vom Testverein ist sichtbar</li>
+  <li>Schritt 3: Fehlermeldung (400), weil Konto 1000 in diesem Projekt nicht existiert</li>
+  <li>Schritt 4: Nach dem Logout ist der Token aus dem Local Storage entfernt</li>
+  <li>Schritt 5: Ein kopierter Token bleibt bis zum Ablauf (1 Stunde) gültig. Das ist bei JWT ohne Sperrliste so zu erwarten und wird als Beobachtung notiert</li>
+  <li>Schritt 6: beide Aufrufe liefern 401</li>
+</ul>
+
+<div class="page"></div>
+<h2>Testprotokoll</h2>
+
+<table class="meta">
+  <tr><td>Test durchgeführt am</td><td>24.11.2026</td></tr>
+  <tr><td>Test durchgeführt durch</td><td>Jonas Laur</td></tr>
+  <tr><td>Getestetes System</td><td class="fill">localhost von ________________________</td></tr>
+  <tr><td>Gesamtergebnis</td><td class="fill">OK / Not OK</td></tr>
+</table>
+
+<table>
+  <tr><th style="width:38%">Testfall</th><th>Ergebnis</th><th style="width:18%">Schweregrad der Fehler</th></tr>
+  <tr><td>Testfall 1: Registrierung mit ungültigen Daten</td><td class="fill">&nbsp;<br>&nbsp;</td><td></td></tr>
+  <tr><td>Testfall 2: Konto löschen, das in einer Buchung verwendet wird</td><td class="fill">&nbsp;<br>&nbsp;</td><td></td></tr>
+  <tr><td>Testfall 3: Ungültige Buchungen</td><td class="fill">&nbsp;<br>&nbsp;</td><td></td></tr>
+  <tr><td>Testfall 4: Datentrennung zwischen Projekten und Zugriff nach dem Logout</td><td class="fill">&nbsp;<br>&nbsp;</td><td></td></tr>
+</table>
+
+<h3>Gefundene Fehler im Frontend</h3>
+<p class="fill">&nbsp;</p>
+<p class="fill">&nbsp;</p>
+
+</body>
+</html>
